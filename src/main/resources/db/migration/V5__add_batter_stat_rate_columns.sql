@@ -1,0 +1,6 @@
+-- V5__add_batter_stat_rate_columns.sql
+
+ALTER TABLE batter_stat
+    ADD COLUMN slg NUMERIC(4,3) NOT NULL DEFAULT 0,
+    ADD COLUMN obp NUMERIC(4,3) NOT NULL DEFAULT 0,
+    ADD COLUMN ops NUMERIC(4,3) NOT NULL DEFAULT 0;
