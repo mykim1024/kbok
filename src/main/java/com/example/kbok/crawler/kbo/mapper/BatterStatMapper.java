@@ -1,7 +1,5 @@
 package com.example.kbok.crawler.kbo.mapper;
 
-import java.time.LocalDate;
-
 import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.dto.BatterStatDto;

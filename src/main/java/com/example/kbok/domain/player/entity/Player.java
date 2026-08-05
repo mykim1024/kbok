@@ -58,6 +58,7 @@ public class Player {
             Integer height, Integer weight, String school, String backNumber, Team team){
         this.position = position;
         this.birthDate = birthDate;
+        this.height = height;
         this.weight = weight;
         this.school = school;
         this.backNumber = backNumber;

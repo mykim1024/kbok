@@ -1,9 +1,6 @@
 package com.example.kbok.crawler.kbo.dto;
 
 import java.math.BigDecimal;
-
-import com.example.kbok.domain.player.entity.BatterStat;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
