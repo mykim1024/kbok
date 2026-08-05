@@ -1,7 +1,6 @@
-package com.example.kbok.crawler.kbo;
+package com.example.kbok.crawler.kbo.service;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -10,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.example.kbok.crawler.kbo.BatterStatCrawler;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic1Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic2Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatDto;

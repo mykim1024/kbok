@@ -29,9 +29,6 @@ public class KboPlayerProfileCrawler {
         private static final String UA = "Mozilla/5.0 (kbok-project; educational use)";
 
         // 폼 필드의 정확한 name들 (매번 재입력 실수 방지용 상수화)
-        private static final String F_SCRIPT_MANAGER =
-                "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$ScriptManager1";
-        private static final String F_EVENT_TARGET = "__EVENTTARGET";
         private static final String F_TEAM =
                 "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$ddlTeam";
         private static final String F_POSITION =

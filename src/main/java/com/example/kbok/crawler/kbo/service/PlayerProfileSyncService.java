@@ -1,10 +1,11 @@
-package com.example.kbok.crawler.kbo;
+package com.example.kbok.crawler.kbo.service;
 
 import java.io.IOException;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.example.kbok.crawler.kbo.KboPlayerProfileCrawler;
 import com.example.kbok.crawler.kbo.dto.PlayerProfileDto;
 import com.example.kbok.crawler.kbo.mapper.PlayerProfileMapper;
 

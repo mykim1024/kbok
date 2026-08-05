@@ -165,7 +165,7 @@ public class BatterStatCrawler {
                 extractDeltaValue(body, "__EVENTVALIDATION"));
         }
 
-         public String extractDeltaValue(String body, String fieldName){
+        public String extractDeltaValue(String body, String fieldName){
             Matcher m = Pattern.compile(Pattern.quote(fieldName) + "\\|([^|]*)\\|").matcher(body);
             return m.find() ? m.group(1) : null;
         }
