@@ -23,4 +23,12 @@ public class KboLinkParser {
             return null;
         }
     }
+
+    public static Integer parseInteger(String raw){
+            try {
+                return Integer.parseInt(raw);
+            } catch (Exception e) {
+                return null;
+            }
+    }
 }
