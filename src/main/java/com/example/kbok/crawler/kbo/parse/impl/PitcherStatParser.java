@@ -1,9 +1,7 @@
 package com.example.kbok.crawler.kbo.parse.impl;
 
-import java.util.Map;
-
-import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 public interface PitcherStatParser <T>{
-    Map<Long, T> parse(Document doc);
+    T rowParser(Element row);
 }

@@ -1,9 +1,5 @@
 package com.example.kbok.crawler.kbo.parse;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -13,17 +9,6 @@ import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 public class PitcherStatBasic2Parse implements PitcherStatParser<PitcherStatBasic2Dto>{
     @Override
-    public Map<Long, PitcherStatBasic2Dto> parse(Document doc) {
-        Map<Long, PitcherStatBasic2Dto> map = new HashMap<>();
-
-        for(Element row : doc.select("table.tData01 tbody tr")){
-            PitcherStatBasic2Dto dto = rowParser(row);
-            map.put(dto.getPlayerId(), dto);
-        }
-
-        return map;
-    }
-
     public PitcherStatBasic2Dto rowParser(Element row){
         Elements cols  = row.select("td");
 

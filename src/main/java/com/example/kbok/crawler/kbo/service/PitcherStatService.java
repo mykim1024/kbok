@@ -78,7 +78,6 @@ public class PitcherStatService {
              }
         }
         
-        
         log.info("[PitcherStat] {} 완료 - {}/{}", teamCode, successCount, list.size());
         return successCount;
     }

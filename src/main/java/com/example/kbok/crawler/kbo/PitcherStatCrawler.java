@@ -9,11 +9,13 @@ import java.util.regex.Pattern;
 import org.jsoup.Connection.Method;
 import org.jsoup.Connection.Response;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.parse.impl.PitcherStatParser;
+import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,17 +52,16 @@ public class PitcherStatCrawler {
     public <T> Map<Long, T> crawl(String url, String season, String teamCode, PitcherStatParser<T> parser) throws IOException, InterruptedException{
         PostbackResult initResutl = crawlInit(url);
         
-        Map<Long, T> parseResult = new HashMap<>();
         PostbackResult pageResult = crawlByPage(url, teamCode, season, "1", initResutl);
-        parseResult.putAll(parser.parse(pageResult.doc));
+       
+        Map<Long, T> parseResult = new HashMap<>();
+        parseResult.putAll(parse(pageResult.doc, parser));
 
         int maxPage = extractMaxPage(pageResult.doc());
         for(int page = 2; page <= maxPage; page++){
-            String hfPageValue = String.valueOf(page - 1);
-            pageResult = crawlByPage(url, teamCode, season, hfPageValue, pageResult);
-            parseResult.putAll(parser.parse(pageResult.doc));
+            pageResult = crawlByPage(url, teamCode, season, String.valueOf(page), pageResult);
+            parseResult.putAll(parse(pageResult.doc, parser));
         }
-        
 
         return parseResult;
     }
@@ -81,10 +82,9 @@ public class PitcherStatCrawler {
         return  new PostbackResult(initialDoc, viewState, viewStateGen, eventValidation, cookies);
     }
 
-    private PostbackResult crawlByPage(String url, String teamCode, String season, String hfPageValue, PostbackResult postbackResult) throws IOException{
-        String pageEvnet = PAGER_PREFIX + hfPageValue;
-        String scriptManagerValue = "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$udpContent|" + F_TEAM;
-        
+    private PostbackResult crawlByPage(String url, String teamCode, String season, String page, PostbackResult postbackResult) throws IOException{
+        String pageEvnet = PAGER_PREFIX + page;
+       
         Response response = Jsoup.connect(url)
             .userAgent(UA)
             .cookies(postbackResult.cookies)
@@ -94,14 +94,14 @@ public class PitcherStatCrawler {
             .header("Accept-Language", "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7")
             .header("X-MicrosoftAjax", "Delta=true")
             .header("X-Requested-With", "XMLHttpRequest")
-            .data(F_SCRIPT_MANAGER, scriptManagerValue)
-            .data("__EVENTTARGET", F_TEAM)
+            .data(F_SCRIPT_MANAGER, pageEvnet)
+            .data("__EVENTTARGET", pageEvnet)
             .data("__EVENTARGUMENT", "")
             .data("__LASTFOCUS", "")
             .data("__VIEWSTATE", postbackResult.viewState)
             .data("__VIEWSTATEGENERATOR", postbackResult.viewStateGen)
             .data("__EVENTVALIDATION", postbackResult.eventValidation)
-            .data(F_PAGE, hfPageValue)
+            .data(F_PAGE, "1")
             .data(F_PAGE_ORDER, "ASC")
             .data(F_PAGE_ORDER_COL, "ERA_RT")
             .data(F_SEASON, season)
@@ -136,4 +136,14 @@ public class PitcherStatCrawler {
         return elements.size() == 1 ? 1 : elements.size() - 2;   
     }
     
+    public <T> Map<Long, T> parse(Document doc, PitcherStatParser<T> parser) {
+        Map<Long, T> map = new HashMap<>();
+
+        for(Element row : doc.select("table.tData01 tbody tr")){
+            Long playerId = KboLinkParser.extractPlayerId(row.select("td").get(1));
+            T dto = parser.rowParser(row);
+            map.put(playerId, dto);
+        }
+        return map;
+    }
 }
