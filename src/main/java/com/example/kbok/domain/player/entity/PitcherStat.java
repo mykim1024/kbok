@@ -1,5 +1,9 @@
 package com.example.kbok.domain.player.entity;
 
+import java.math.BigDecimal;
+
+import com.example.kbok.domain.common.entity.BaseEntity;
+import com.example.kbok.domain.player.util.InningsConverter;
 import com.example.kbok.domain.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +12,7 @@ import lombok.*;
 @Table(name = "pitcher_stat")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PitcherStat {
+public class PitcherStat extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,7 +63,14 @@ public class PitcherStat {
     private Integer qs;
 
     @Column(nullable = false)
-    private String inningsPitched;
+    private String inningsPitched;      // 표시용 ("150 2/3")
+
+    @Column(nullable = false)
+    private Integer inningsOuts;        // 계산용 아웃카운트 (150 2/3 → 452)
+
+    private BigDecimal era;             // 평균자책점 (KBO 공식 값, 이닝 0이면 null)
+
+    private BigDecimal whip;            // WHIP (KBO 공식 값, 이닝 0이면 null)
 
     @Column(nullable = false)
     private Integer tbf;
@@ -111,7 +122,8 @@ public class PitcherStat {
                        Integer tbf, Integer hits, Integer homeRuns, Integer doubles,
                        Integer triples, Integer bb, Integer ibb, Integer hbp,
                        Integer so, Integer runs, Integer earnedRuns,
-                       Integer wildPitches, Integer balks, Integer gdp) {
+                       Integer wildPitches, Integer balks, Integer gdp,
+                       BigDecimal era, BigDecimal whip) {
         this.player = player;
         this.team = team;
         this.season = season;
@@ -127,6 +139,7 @@ public class PitcherStat {
         this.sho = sho;
         this.qs = qs;
         this.inningsPitched = inningsPitched;
+        this.inningsOuts = InningsConverter.toOuts(inningsPitched);
         this.tbf = tbf;
         this.hits = hits;
         this.homeRuns = homeRuns;
@@ -141,6 +154,8 @@ public class PitcherStat {
         this.wildPitches = wildPitches;
         this.balks = balks;
         this.gdp = gdp;
+        this.era = era;
+        this.whip = whip;
     }
 
     public void updatePitcherStat(Player player, Integer games,
@@ -150,7 +165,8 @@ public class PitcherStat {
                        Integer tbf, Integer hits, Integer homeRuns, Integer doubles,
                        Integer triples, Integer bb, Integer ibb, Integer hbp,
                        Integer so, Integer runs, Integer earnedRuns,
-                       Integer wildPitches, Integer balks, Integer gdp) {
+                       Integer wildPitches, Integer balks, Integer gdp,
+                       BigDecimal era, BigDecimal whip) {
         this.player = player;
         this.games = games;
         this.gamesStarted = gamesStarted;
@@ -164,6 +180,7 @@ public class PitcherStat {
         this.sho = sho;
         this.qs = qs;
         this.inningsPitched = inningsPitched;
+        this.inningsOuts = InningsConverter.toOuts(inningsPitched);
         this.tbf = tbf;
         this.hits = hits;
         this.homeRuns = homeRuns;
@@ -178,5 +195,7 @@ public class PitcherStat {
         this.wildPitches = wildPitches;
         this.balks = balks;
         this.gdp = gdp;
+        this.era = era;
+        this.whip = whip;
     }
 }

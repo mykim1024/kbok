@@ -31,4 +31,13 @@ public class KboLinkParser {
                 return null;
             }
     }
+
+    /** "-" 같은 빈 값은 null (예: 이닝이 0인 투수의 ERA) */
+    public static java.math.BigDecimal parseDecimal(String raw){
+        try {
+            return new java.math.BigDecimal(raw);
+        } catch (Exception e) {
+            return null;
+        }
+    }
 }

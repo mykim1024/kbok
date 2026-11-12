@@ -2,6 +2,7 @@ package com.example.kbok.domain.player.entity;
 
 import java.math.BigDecimal;
 
+import com.example.kbok.domain.common.entity.BaseEntity;
 import com.example.kbok.domain.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @Table(name = "batter_stat")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class BatterStat {
+public class BatterStat extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -88,12 +89,22 @@ public class BatterStat {
     @Column(nullable =  false)
     private BigDecimal ops;
 
+    @Column(nullable = false)
+    private BigDecimal avg;     // 타율 (KBO 공식 값)
+
+    @Column(nullable = false)
+    private Integer sb;         // 도루 (주루 크롤러에서 채움)
+
+    @Column(nullable = false)
+    private Integer cs;         // 도루 실패 (주루 크롤러에서 채움)
+
     @Builder
     public BatterStat(Player player, Team team, Integer season, Integer games,
                       Integer pa, Integer ab, Integer runs, Integer hits,
                       Integer doubles, Integer triples, Integer homeRuns,
                       Integer totalBases, Integer rbi, Integer sac, Integer sf, Integer bb, Integer ibb,
-                      Integer hbp, Integer so, Integer gdp, BigDecimal slg, BigDecimal obp, BigDecimal ops) {
+                      Integer hbp, Integer so, Integer gdp, BigDecimal slg, BigDecimal obp, BigDecimal ops,
+                      BigDecimal avg) {
         this.player = player;
         this.team = team;
         this.season = season;
@@ -118,13 +129,17 @@ public class BatterStat {
         this.slg = slg;
         this.obp = obp;
         this.ops = ops;
+        this.avg = avg;
+        this.sb = 0;   // 주루 기록은 별도 수집 전까지 0
+        this.cs = 0;
     }
 
     public void updateBatterStat(Player player, Integer games,
                       Integer pa, Integer ab, Integer runs, Integer hits,
                       Integer doubles, Integer triples, Integer homeRuns,
                       Integer totalBases, Integer rbi, Integer sac, Integer sf, Integer bb, Integer ibb,
-                      Integer hbp, Integer so, Integer gdp, BigDecimal slg, BigDecimal obp, BigDecimal ops){
+                      Integer hbp, Integer so, Integer gdp, BigDecimal slg, BigDecimal obp, BigDecimal ops,
+                      BigDecimal avg){
         this.player = player;
         this.games = games;
         this.pa = pa;
@@ -147,5 +162,12 @@ public class BatterStat {
         this.slg = slg;
         this.obp = obp;
         this.ops = ops;
+        this.avg = avg;
+    }
+
+    /** 주루 기록(도루·도루 실패) 갱신 */
+    public void updateRunning(Integer sb, Integer cs) {
+        this.sb = sb;
+        this.cs = cs;
     }
 }

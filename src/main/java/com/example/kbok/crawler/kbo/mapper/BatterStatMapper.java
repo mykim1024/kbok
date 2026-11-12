@@ -3,6 +3,7 @@ package com.example.kbok.crawler.kbo.mapper;
 import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.dto.BatterStatDto;
+import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
 import com.example.kbok.domain.player.entity.BatterStat;
 import com.example.kbok.domain.player.entity.Player;
 import com.example.kbok.domain.player.repository.BatterStatRepository;
@@ -37,8 +38,9 @@ public class BatterStatMapper  {
             .map(existing -> {
                     existing.updateBatterStat(player, dto.getGame(), dto.getPa(), dto.getAb(), dto.getRun(), dto.getHit(),
                         dto.getDouble2b(), dto.getTriple3b(), dto.getHr(), dto.getTb(), dto.getRbi(), dto.getSac(), dto.getSf(), dto.getBb(),
-                        dto.getIbb(), dto.getHbp(), dto.getSo(), dto.getGdp(), dto.getSlg(), dto.getObp(), dto.getOps());
-                return existing;
+                        dto.getIbb(), dto.getHbp(), dto.getSo(), dto.getGdp(), dto.getSlg(), dto.getObp(), dto.getOps(), dto.getAvg());
+                // 서비스 내부 호출이라 @Transactional이 적용되지 않아 변경 감지가 동작하지 않는다 → 명시적으로 저장
+                return batterStatRepository.save(existing);
             })
             .orElseGet(() -> batterStatRepository.save(
                 BatterStat.builder()
@@ -65,8 +67,26 @@ public class BatterStatMapper  {
                     .slg(dto.getSlg())
                     .obp(dto.getObp())
                     .ops(dto.getOps())
+                    .avg(dto.getAvg())
                     .build()
             ));
     }
     
- }
+ 
+    /**
+     * 주루 기록(도루·도루 실패)을 이미 저장된 타자 기록에 반영한다.
+     * 타석 없이 대주자로만 나온 선수처럼 타자 기록이 없으면 false.
+     */
+    public boolean updateRunning(RunnerStatDto dto, Integer season){
+        String playerId = String.valueOf(dto.getPlayerId());
+        return batterStatRepository.findByPlayerKboPlayerIdAndSeason(playerId, season)
+            .map(existing -> {
+                existing.updateRunning(
+                    dto.getSb() != null ? dto.getSb() : 0,
+                    dto.getCs() != null ? dto.getCs() : 0);
+                batterStatRepository.save(existing);
+                return true;
+            })
+            .orElse(false);
+    }
+}

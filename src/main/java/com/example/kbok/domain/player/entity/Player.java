@@ -2,6 +2,7 @@ package com.example.kbok.domain.player.entity;
 
 import java.time.LocalDate;
 
+import com.example.kbok.domain.common.entity.BaseEntity;
 import com.example.kbok.domain.team.entity.Team;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +11,7 @@ import lombok.*;
 @Table(name = "player")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Player {
+public class Player extends BaseEntity{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

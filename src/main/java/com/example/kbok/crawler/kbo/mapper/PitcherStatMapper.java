@@ -36,8 +36,10 @@ public class PitcherStatMapper {
                     dto.getHld(), dto.getBsv(), dto.getSvo(), dto.getCg(), dto.getSho(), dto.getQs(), dto.getIp(),
                     dto.getTbf(), dto.getH(), dto.getHr(), dto.getDoubles(), dto.getTriples(),
                     dto.getBb(), dto.getIbb(), dto.getHbp(), dto.getSo(), dto.getR(), 
-                    dto.getEr(), dto.getWp(), dto.getBk(), dto.getGdp());
-                return existing;
+                    dto.getEr(), dto.getWp(), dto.getBk(), dto.getGdp(),
+                    dto.getEra(), dto.getWhip());
+                // 서비스 내부 호출이라 @Transactional이 적용되지 않아 변경 감지가 동작하지 않는다 → 명시적으로 저장
+                return pitcherStatRepository.save(existing);
             })
             .orElseGet(() -> pitcherStatRepository.save(
                 PitcherStat.builder()
@@ -70,6 +72,8 @@ public class PitcherStatMapper {
                     .wildPitches(dto.getWp())
                     .balks(dto.getBk())
                     .gdp(dto.getGdp())
+                    .era(dto.getEra())
+                    .whip(dto.getWhip())
                     .build()
             ));
         

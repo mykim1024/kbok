@@ -1,5 +1,7 @@
 package com.example.kbok.crawler.kbo.dto;
 
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +13,7 @@ public class BatterStatBasic1Dto {
     private String name;
     private String team;
 
+    private BigDecimal avg; // 타율 (KBO 공식 값)
     private Integer game;        // 경기
     private Integer pa;          // 타석
     private Integer ab;          // 타수
