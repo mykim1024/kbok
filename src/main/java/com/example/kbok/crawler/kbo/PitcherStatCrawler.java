@@ -10,7 +10,6 @@ import org.jsoup.Connection.Method;
 import org.jsoup.Connection.Response;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
