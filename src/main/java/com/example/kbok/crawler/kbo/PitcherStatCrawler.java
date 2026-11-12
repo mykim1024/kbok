@@ -58,6 +58,7 @@ public class PitcherStatCrawler {
         parseResult.putAll(parse(pageResult.doc, parser));
 
         int maxPage = extractMaxPage(pageResult.doc());
+        log.info("[{}] {} 총 페이지 수 : {}", teamCode, url.substring(url.lastIndexOf('/') + 1), maxPage);
         for(int page = 2; page <= maxPage; page++){
             pageResult = crawlByPage(url, teamCode, season, String.valueOf(page), pageResult);
             parseResult.putAll(parse(pageResult.doc, parser));
@@ -131,9 +132,20 @@ public class PitcherStatCrawler {
         return m.find() ? m.group(1) : null;
     }
 
+    /**
+     * 페이저 안의 숫자 버튼 중 가장 큰 값을 페이지 수로 쓴다.
+     * 기존 방식(div.paging 개수)은 페이저가 div 하나라 항상 1페이지로 계산돼 30명에서 잘렸다.
+     */
     private int extractMaxPage(Document doc){
-        Elements elements = doc.select("div.paging");
-        return elements.size() == 1 ? 1 : elements.size() - 2;   
+        int max = 1;
+        for (Element el : doc.select("div.paging a, div.paging span")) {
+            try {
+                max = Math.max(max, Integer.parseInt(el.text().trim()));
+            } catch (NumberFormatException e) {
+                // "이전", "다음" 같은 버튼은 건너뜀
+            }
+        }
+        return max;
     }
     
     public <T> Map<Long, T> parse(Document doc, PitcherStatParser<T> parser) {

@@ -45,6 +45,9 @@ public class PitcherStatDto {
     private Integer svo;    // 세이브 기회
     private Integer gdp;    // 병살타
 
+    private java.math.BigDecimal era;   // 평균자책점
+    private java.math.BigDecimal whip;  // WHIP
+
     public static PitcherStatDto merge(Integer season, PitcherStatBasic1Dto basic1, PitcherStatBasic2Dto basic2, PitcherStatDetailDto detail){
         return PitcherStatDto.builder()
             .playerId(basic1.getPlayerId())
@@ -77,6 +80,8 @@ public class PitcherStatDto {
             .gs(detail.getGs())
             .svo(detail.getSvo())
             .gdp(detail.getGdp())
+            .era(basic1.getEra())
+            .whip(basic1.getWhip())
             .build();
     }
 }

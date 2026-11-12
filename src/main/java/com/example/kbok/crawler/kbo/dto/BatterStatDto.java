@@ -35,6 +35,7 @@ public class BatterStatDto {
     private BigDecimal slg;         // 장타율
     private BigDecimal obp;         // 출루율
     private BigDecimal ops;         // OPS
+    private BigDecimal avg;         // 타율
 
     public BatterStatDto(Long playerId){
         this.playerId = playerId;
@@ -66,6 +67,8 @@ public class BatterStatDto {
         dto.slg = basic2.getSlg();
         dto.obp = basic2.getObp();
         dto.ops = basic2.getOps();
+        // 타수가 없어 AVG가 "-"로 나오는 선수는 0으로 저장
+        dto.avg = basic1.getAvg() != null ? basic1.getAvg() : BigDecimal.ZERO;
         return dto;
     }
 }

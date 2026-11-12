@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic1Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic2Dto;
+import com.example.kbok.crawler.kbo.dto.FieldingStatDto;
+import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
 import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,8 @@ public class BatterStatCrawler {
 
     private static final String URL1 = "https://www.koreabaseball.com/Record/Player/HitterBasic/Basic1.aspx?sort=HRA_RT";
     private static final String URL2 = "https://www.koreabaseball.com/Record/Player/HitterBasic/Basic2.aspx?sort=HRA_RT";
+    private static final String URL_RUNNER = "https://www.koreabaseball.com/Record/Player/Runner/Basic.aspx";
+    private static final String URL_DEFENSE = "https://www.koreabaseball.com/Record/Player/Defense/Basic.aspx";
     private static final String UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36";
 
     // 폼 필드의 정확한 name들 (매번 재입력 실수 방지용 상수화)
@@ -63,14 +67,24 @@ public class BatterStatCrawler {
     private record PostbackResult(Document doc, String viewState, String viewStateGen, String eventValidation){}
 
     public List<BatterStatBasic1Dto> crawlBasic1(String teamCode, String season) throws IOException, InterruptedException {
-        return crawlByTeam(URL1, teamCode, season, this::parseRow);        // T = BatterRecordBasic1Dto
+        return crawlByTeam(URL1, teamCode, season, this::parseRow, "HRA_RT");        // T = BatterRecordBasic1Dto
     }
 
     public List<BatterStatBasic2Dto> crawlBasic2(String teamCode, String season) throws IOException, InterruptedException {
-        return crawlByTeam(URL2, teamCode, season, this::parseRowDetail);  // T = BatterRecordBasic2Dto
+        return crawlByTeam(URL2, teamCode, season, this::parseRowDetail, "HRA_RT");  // T = BatterRecordBasic2Dto
     }
 
-    private <T> List<T> crawlByTeam(String url, String teamCode, String season, Function<Element, T> rowParser) throws IOException, InterruptedException {
+    /** 주루 기록 (도루·도루 실패) - 같은 postback 구조라 타자 크롤러를 재사용 */
+    public List<RunnerStatDto> crawlRunner(String teamCode, String season) throws IOException, InterruptedException {
+        return crawlByTeam(URL_RUNNER, teamCode, season, this::parseRunnerRow, "SB_CN");
+    }
+
+    /** 수비 기록 - 한 선수가 여러 포지션을 보면 포지션마다 한 줄씩 나온다 */
+    public List<FieldingStatDto> crawlFielding(String teamCode, String season) throws IOException, InterruptedException {
+        return crawlByTeam(URL_DEFENSE, teamCode, season, this::parseFieldingRow, "GAME_CN");
+    }
+
+    private <T> List<T> crawlByTeam(String url, String teamCode, String season, Function<Element, T> rowParser, String orderCol) throws IOException, InterruptedException {
         List<T> all = new ArrayList<>();
 
         Response initial = Jsoup.connect(url)
@@ -85,7 +99,7 @@ public class BatterStatCrawler {
         String eventValidation = initialDoc.select("#__EVENTVALIDATION").val();
         Map<String, String> cookies = initial.cookies();
 
-        PostbackResult page1 = requestPage(url, cookies, viewState, viewStateGen, eventValidation, F_TEAM, teamCode, "1", season);
+        PostbackResult page1 = requestPage(url, cookies, viewState, viewStateGen, eventValidation, F_TEAM, teamCode, "1", season, orderCol);
         all.addAll(parseRows(page1.doc(), rowParser));
 
         int maxPage = extractMaxPage(page1.doc());
@@ -107,7 +121,7 @@ public class BatterStatCrawler {
                 hfPageValue = String.valueOf(page - 1);
             }
 
-            PostbackResult result = requestPage(url, cookies, vs, vsg, ev, eventTarget, teamCode, hfPageValue, season);
+            PostbackResult result = requestPage(url, cookies, vs, vsg, ev, eventTarget, teamCode, hfPageValue, season, orderCol);
             all.addAll(parseRows(result.doc(), rowParser));
 
             vs = result.viewState();
@@ -121,7 +135,7 @@ public class BatterStatCrawler {
         return all;
     }
 
-    private PostbackResult requestPage(String url, Map<String, String> cookies, String viewState, String viewStateGen, String eventValidation, String eventTarget, String teamCode, String hfPageValue, String season) throws IOException{
+    private PostbackResult requestPage(String url, Map<String, String> cookies, String viewState, String viewStateGen, String eventValidation, String eventTarget, String teamCode, String hfPageValue, String season, String orderCol) throws IOException{
         String scriptManagerValue = "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$udpContent|" + eventTarget;
 
         // 2단계: KIA(HT) 필터로 부분 postback 요청
@@ -143,7 +157,7 @@ public class BatterStatCrawler {
             .data("__EVENTVALIDATION", eventValidation)
             .data(F_PAGE, hfPageValue)
             .data(F_PAGE_ORDER, "DESC")
-            .data(F_PAGE_ORDER_COL, "HRA_RT")
+            .data(F_PAGE_ORDER_COL, orderCol)
             .data(F_SEASON, season)
             .data(F_SERIES, "0")
             .data(F_TEAM, teamCode)
@@ -170,9 +184,20 @@ public class BatterStatCrawler {
             return m.find() ? m.group(1) : null;
         }
 
+        /**
+         * 페이저 안의 숫자 버튼 중 가장 큰 값을 페이지 수로 쓴다.
+         * 기존 방식(div.paging 개수)은 페이저가 div 하나라 항상 1페이지로 계산돼 30명에서 잘렸다.
+         */
         private int extractMaxPage(Document doc){
-            Elements elements = doc.select("div.paging");
-            return elements.size() == 1 ? 1 : elements.size() - 2;   
+            int max = 1;
+            for (Element el : doc.select("div.paging a, div.paging span")) {
+                try {
+                    max = Math.max(max, Integer.parseInt(el.text().trim()));
+                } catch (NumberFormatException e) {
+                    // "이전", "다음" 같은 버튼은 건너뜀
+                }
+            }
+            return max;
         }
 
         private <T> List<T> parseRows(Document doc, Function<Element, T> rowParser){
@@ -192,6 +217,7 @@ public class BatterStatCrawler {
             dto.setPlayerId(KboLinkParser.extractPlayerId(cols.get(1)));
             dto.setName(cols.get(1).text().trim());
             dto.setTeam(cols.get(2).text().trim());
+            dto.setAvg(paseDecimal(cols.get(3).text().trim()));   // AVG
             dto.setGame(parseInteger(cols.get(4).text().trim()));
             dto.setPa(parseInteger(cols.get(5).text().trim()));
             dto.setAb(parseInteger(cols.get(6).text().trim()));
@@ -226,6 +252,36 @@ public class BatterStatCrawler {
             dto.setObp(paseDecimal(cols.get(10).text().trim()));
             dto.setOps(paseDecimal(cols.get(11).text().trim()));
 
+            return dto;
+        }
+
+        /** 주루기록 컬럼: 순위, 선수명, 팀명, G, SBA, SB, CS, SB%, OOB, PKO */
+        private RunnerStatDto parseRunnerRow(Element row){
+            Elements cols = row.select("td");
+            if(cols.size() < 10) return null;
+
+            RunnerStatDto dto = new RunnerStatDto();
+            dto.setPlayerId(KboLinkParser.extractPlayerId(cols.get(1)));
+            dto.setName(cols.get(1).text().trim());
+            dto.setTeam(cols.get(2).text().trim());
+            dto.setSb(parseInteger(cols.get(5).text().trim()));   // SB
+            dto.setCs(parseInteger(cols.get(6).text().trim()));   // CS
+            return dto;
+        }
+
+        /** 수비기록 컬럼: 순위, 선수명, 팀명, POS, G, GS, IP, E, PKO, PO, A, DP, FPCT, PB, SB, CS, CS% */
+        private FieldingStatDto parseFieldingRow(Element row){
+            Elements cols = row.select("td");
+            if(cols.size() < 13) return null;
+
+            FieldingStatDto dto = new FieldingStatDto();
+            dto.setPlayerId(KboLinkParser.extractPlayerId(cols.get(1)));
+            dto.setName(cols.get(1).text().trim());
+            dto.setTeam(cols.get(2).text().trim());
+            dto.setPosition(cols.get(3).text().trim());              // POS (예: 유격수)
+            dto.setGames(parseInteger(cols.get(4).text().trim()));    // G
+            dto.setErrors(parseInteger(cols.get(7).text().trim()));   // E
+            dto.setFieldingPct(paseDecimal(cols.get(12).text().trim())); // FPCT, 수비 기회가 없으면 "-" → null
             return dto;
         }
 

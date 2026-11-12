@@ -11,6 +11,8 @@ public class PitcherStatBasic1Dto {
     private String name;
     private String team;
 
+    private java.math.BigDecimal era;   // 평균자책점 (KBO 공식 값)
+    private java.math.BigDecimal whip;  // WHIP (KBO 공식 값)
     private Integer game;   // 경기
     private Integer w;      // 승리
     private Integer l;      // 패배

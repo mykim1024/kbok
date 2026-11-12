@@ -42,6 +42,9 @@ public class PitcherStatService {
         Thread.sleep(1000);
         Map<Long, PitcherStatDetailDto> detail = crawler.crawl(URL3, season, teamCode, new PitcherStatDetailParse());
 
+        log.info("[PitcherStat] {} 수집 건수 - basic1: {}, basic2: {}, detail: {}",
+            teamCode, basic1.size(), basic2.size(), detail.size());
+
         List<PitcherStatDto> list = mergeResult(KboLinkParser.parseInteger(season), basic1, basic2, detail);
         
         return saveAll(list, teamCode);
@@ -53,10 +56,16 @@ public class PitcherStatService {
         
         for(Long playerId : playerIds){
             PitcherStatBasic2Dto b2 = basic2.get(playerId);
-            PitcherStatDetailDto d = detail.get(playerId);
-            if (b2 == null || d == null) {
-                log.warn("병합 누락 - playerId: {}, basic2: {}, detail: {}", playerId, b2 != null, d != null);
+            if (b2 == null) {
+                log.warn("병합 누락 - playerId: {}, basic2 없음", playerId);
                 continue;
+            }
+
+            // 세부기록(선발·세이브 기회·병살)은 해석 지표에 쓰지 않으므로,
+            // 없으면 0으로 채워 투수 기록 자체는 저장한다.
+            PitcherStatDetailDto d = detail.get(playerId);
+            if (d == null) {
+                d = PitcherStatDetailDto.builder().gs(0).svo(0).gdp(0).build();
             }
             PitcherStatDto dto = PitcherStatDto.merge(season, basic1.get(playerId), b2, d);  // 리턴값을 바로 받음
             resultList.add(dto);

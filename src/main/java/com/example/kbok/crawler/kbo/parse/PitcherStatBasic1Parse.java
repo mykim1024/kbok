@@ -16,6 +16,7 @@ public class PitcherStatBasic1Parse implements PitcherStatParser<PitcherStatBasi
         dto.setPlayerId(KboLinkParser.extractPlayerId(cols.get(1)));
         dto.setName(cols.get(1).text().trim());
         dto.setTeam(cols.get(2).text().trim());
+        dto.setEra(KboLinkParser.parseDecimal(cols.get(3).text().trim()));    // ERA
         dto.setGame(KboLinkParser.parseInteger(cols.get(4).text().trim()));
         dto.setW(KboLinkParser.parseInteger(cols.get(5).text().trim()));
         dto.setL(KboLinkParser.parseInteger(cols.get(6).text().trim()));
@@ -29,6 +30,7 @@ public class PitcherStatBasic1Parse implements PitcherStatParser<PitcherStatBasi
         dto.setSo(KboLinkParser.parseInteger(cols.get(15).text().trim()));
         dto.setR(KboLinkParser.parseInteger(cols.get(16).text().trim()));
         dto.setEr(KboLinkParser.parseInteger(cols.get(17).text().trim()));
+        dto.setWhip(KboLinkParser.parseDecimal(cols.get(18).text().trim()));  // WHIP
         return dto;
     }
 

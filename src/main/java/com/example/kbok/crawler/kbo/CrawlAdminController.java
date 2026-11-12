@@ -2,7 +2,11 @@ package com.example.kbok.crawler.kbo;
 
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 import com.example.kbok.crawler.kbo.service.BatterStatService;
+import com.example.kbok.crawler.kbo.service.FieldingStatService;
+import com.example.kbok.crawler.kbo.service.KboFullSyncService;
 import com.example.kbok.crawler.kbo.service.PitcherStatService;
 import com.example.kbok.crawler.kbo.service.PlayerProfileSyncService;
 
@@ -19,6 +23,8 @@ public class CrawlAdminController {
     private final PlayerProfileSyncService syncService;
     private final BatterStatService batterService;
     private final PitcherStatService pitcherStatService;
+    private final KboFullSyncService fullSyncService;
+    private final FieldingStatService fieldingStatService;
 
     @PostMapping("/admin/crawl/player-profile")
     public String syncPlayerProfile(@RequestParam String teamCode) throws Exception {
@@ -40,4 +46,21 @@ public class CrawlAdminController {
     
     
     
+    @PostMapping("/admin/crawl/runner-stat")
+    public String syncRunnerStat(@RequestParam String teamCode, @RequestParam String season) throws Exception {
+        int count = batterService.syncRunning(season, teamCode);
+        return "반영 완료: " + count + "명";
+    }
+
+    @PostMapping("/admin/crawl/fielding-stat")
+    public String syncFieldingStat(@RequestParam String teamCode, @RequestParam String season) throws Exception {
+        int count = fieldingStatService.syncFielding(season, teamCode);
+        return "저장 완료: " + count + "건";
+    }
+
+    /** 10개 구단 선수·타자·투수 기록을 한 번에 수집 (예: POST /admin/crawl/all?season=2026) */
+    @PostMapping("/admin/crawl/all")
+    public Map<String, String> syncAll(@RequestParam String season) {
+        return fullSyncService.syncAllTeams(season);
+    }
 }

@@ -13,6 +13,7 @@ import com.example.kbok.crawler.kbo.BatterStatCrawler;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic1Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic2Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatDto;
+import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
 import com.example.kbok.crawler.kbo.mapper.BatterStatMapper;
 
 import jakarta.transaction.Transactional;
@@ -68,5 +69,27 @@ public class BatterStatService {
         
         log.info("[BatterStat] {} 완료 - {}/{}", teamCode, successCount, list.size());
         return successCount;
+    }
+
+    /** 주루 기록 수집 → 저장된 타자 기록에 도루·도루 실패 반영. 타자 기록을 먼저 수집한 뒤 호출해야 한다. */
+    public int syncRunning(String season, String teamCode) throws IOException, InterruptedException {
+        List<RunnerStatDto> runners = crawler.crawlRunner(teamCode, season);
+        Integer seasonValue = Integer.parseInt(season);
+
+        int updated = 0;
+        for (RunnerStatDto dto : runners) {
+            try {
+                if (mapper.updateRunning(dto, seasonValue)) {
+                    updated++;
+                } else {
+                    log.info("[Running] 타자 기록 없음 - name={} (대주자 전용 등)", dto.getName());
+                }
+            } catch (Exception e) {
+                log.warn("[Running] 반영 실패 - name={}, error={}", dto.getName(), e.getMessage());
+            }
+        }
+
+        log.info("[Running] {} 완료 - {}/{}", teamCode, updated, runners.size());
+        return updated;
     }
 }
