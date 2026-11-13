@@ -17,6 +17,7 @@ import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.dto.PlayerProfileDto;
+import com.example.kbok.crawler.kbo.util.CollectVerifier;
 import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,8 @@ public class KboPlayerProfileCrawler {
 
 
         private static final int BLOCK_SIZE = 5;
+        /** 선수 명단 한 페이지에 나오는 인원 (올림 나눗셈: 104명 ÷ 20 = 5.2 → 6페이지) */
+        private static final int PAGE_SIZE = 20;
 
         private record PostbackResult(Document doc, String viewState, String viewStateGen, String eventValidation){}
 
@@ -67,7 +70,9 @@ public class KboPlayerProfileCrawler {
                 PostbackResult page1 = requestPage(cookies, viewState, viewStateGen, eventValidation, F_TEAM, teamCode, "0");
                 all.addAll(parseRows(page1.doc()));
 
-                int maxPage = extractMaxPage(page1.doc());
+                int totalCount = extractTotalCount(page1.doc());
+                int maxPage = totalCount > 0 ? (int) Math.ceil((double) totalCount / PAGE_SIZE) : 1;
+                log.info("총 건수={}, 계산된 페이지 수={}", totalCount, maxPage);
                 log.info("[{}] 총 페이지 수 : {}", teamCode, maxPage);
 
                 String vs = page1.viewState(), vsg = page1.viewStateGen(), ev = page1.eventValidation();
@@ -77,15 +82,22 @@ public class KboPlayerProfileCrawler {
 
                         String eventTarget;
                         String hfPageValue;
-
+                        
                         if (crossesBlockBoundary) {
                                 eventTarget = PAGER_NEXT;
-                                hfPageValue = "1"; // 캡처로 확인된 고정값
-                        } else {
+                                hfPageValue = String.valueOf((page - 1) / BLOCK_SIZE);  // 6페이지 → 1, 11페이지 → 2
+                        }else if (page <= BLOCK_SIZE) {
+                                // 첫 번째 묶음(2~5페이지): 기존 방식 그대로
                                 eventTarget = PAGER_PREFIX + page;
                                 hfPageValue = String.valueOf(page - 1);
+                        } else {
+                                // 두 번째 묶음부터는 버튼 번호가 1부터 다시 시작하고,
+                                // hfPage에는 몇 번째 묶음인지(0부터)를 보낸다.
+                                // 브라우저 확인: 7페이지 = btnNo2 + hfPage 1
+                                int block = (page - 1) / BLOCK_SIZE;
+                                eventTarget = PAGER_PREFIX + (((page - 1) % BLOCK_SIZE) + 1);
+                                hfPageValue = String.valueOf(block);
                         }
-
 
                         PostbackResult result = requestPage(cookies, vs, vsg, ev, eventTarget, teamCode, hfPageValue);
                         all.addAll(parseRows(result.doc()));
@@ -98,6 +110,9 @@ public class KboPlayerProfileCrawler {
                 }
 
                 log.info("[{}] 총 수집 : {}명", teamCode, all.size());
+                if (totalCount > 0) {
+                        CollectVerifier.verifyTotal("선수명단", teamCode, all.size(), totalCount);
+                }
                 return all;
         }
 
@@ -142,21 +157,14 @@ public class KboPlayerProfileCrawler {
                 return m.find() ? m.group(1) : null;
         }
 
-        private int extractMaxPage(Document doc){
+        /** 페이지 상단의 "총 N명"을 읽는다. 못 찾으면 0 (이 경우 1페이지로 처리하고 검증은 건너뜀) */
+        private int extractTotalCount(Document doc){
                 Element countEl = doc.selectFirst("p.title strong span.point");
                 if (countEl == null) {
                         log.warn("총 건수 요소를 못 찾음 - 기본값 1페이지로 처리");
-                        return 1;
+                        return 0;
                 }
-
-                int totalCount = Integer.parseInt(countEl.text().replaceAll("[^0-9]", ""));
-                int pageSize = 20;
-
-                // 올림 나눗셈: 104명 ÷ 20 = 5.2 → 6페이지
-                int maxPage = (int) Math.ceil((double) totalCount / pageSize);
-
-                log.info("총 건수={}, 계산된 페이지 수={}", totalCount, maxPage);
-                return maxPage;
+                return Integer.parseInt(countEl.text().replaceAll("[^0-9]", ""));
         }
 
         private PlayerProfileDto parseRow(Element row){

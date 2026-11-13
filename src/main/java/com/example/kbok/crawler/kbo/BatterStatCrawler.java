@@ -21,6 +21,7 @@ import com.example.kbok.crawler.kbo.dto.BatterStatBasic1Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatBasic2Dto;
 import com.example.kbok.crawler.kbo.dto.FieldingStatDto;
 import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
+import com.example.kbok.crawler.kbo.util.CollectVerifier;
 import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +64,8 @@ public class BatterStatCrawler {
         "ctl00$ctl00$ctl00$cphContents$cphContents$cphContents$ucPager$btnNext";
 
     private static final int BLOCK_SIZE = 5;
+    /** 기록실 한 페이지에 나오는 인원 */
+    private static final int PAGE_SIZE = 30;
 
     private record PostbackResult(Document doc, String viewState, String viewStateGen, String eventValidation){}
 
@@ -114,11 +117,19 @@ public class BatterStatCrawler {
             String hfPageValue;
 
             if (crossesBlockBoundary) {
-                eventTarget = PAGER_NEXT;
-                hfPageValue = "1"; // 캡처로 확인된 고정값
+                    eventTarget = PAGER_NEXT;
+                    hfPageValue = String.valueOf((page - 1) / BLOCK_SIZE);  // 6페이지 → 1, 11페이지 → 2
+            }else if (page <= BLOCK_SIZE) {
+                    // 첫 번째 묶음(2~5페이지): 기존 방식 그대로
+                    eventTarget = PAGER_PREFIX + page;
+                    hfPageValue = String.valueOf(page - 1);
             } else {
-                eventTarget = PAGER_PREFIX + page;
-                hfPageValue = String.valueOf(page - 1);
+                    // 두 번째 묶음부터는 버튼 번호가 1부터 다시 시작하고,
+                    // hfPage에는 몇 번째 묶음인지(0부터)를 보낸다.
+                    // 브라우저 확인: 7페이지 = btnNo2 + hfPage 1
+                    int block = (page - 1) / BLOCK_SIZE;
+                    eventTarget = PAGER_PREFIX + (((page - 1) % BLOCK_SIZE) + 1);
+                    hfPageValue = String.valueOf(block);
             }
 
             PostbackResult result = requestPage(url, cookies, vs, vsg, ev, eventTarget, teamCode, hfPageValue, season, orderCol);
@@ -132,6 +143,8 @@ public class BatterStatCrawler {
         }
 
         log.info("[{}] 총 수집 : {}명", teamCode, all.size());
+        String source = url.substring(url.lastIndexOf("/Record/") + "/Record/Player/".length()).replaceAll("\\?.*", "");
+        CollectVerifier.verifyPageRange(source, teamCode, all.size(), maxPage, PAGE_SIZE);
         return all;
     }
 

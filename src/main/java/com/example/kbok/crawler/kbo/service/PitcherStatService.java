@@ -18,6 +18,7 @@ import com.example.kbok.crawler.kbo.mapper.PitcherStatMapper;
 import com.example.kbok.crawler.kbo.parse.PitcherStatBasic1Parse;
 import com.example.kbok.crawler.kbo.parse.PitcherStatBasic2Parse;
 import com.example.kbok.crawler.kbo.parse.PitcherStatDetailParse;
+import com.example.kbok.crawler.kbo.util.CollectVerifier;
 import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import jakarta.transaction.Transactional;
@@ -47,6 +48,9 @@ public class PitcherStatService {
 
         log.info("[PitcherStat] {} 수집 건수 - basic1: {}, basic2: {}, detail: {}",
             teamCode, basic1.size(), basic2.size(), detail.size());
+        // 세 페이지 모두 같은 팀 투수 전원이라 인원이 같아야 한다
+        CollectVerifier.verifySame("투수", teamCode, Map.of(
+            "기본기록1", basic1.size(), "기본기록2", basic2.size(), "세부기록", detail.size()));
 
         List<PitcherStatDto> list = mergeResult(KboLinkParser.parseInteger(season), basic1, basic2, detail);
         

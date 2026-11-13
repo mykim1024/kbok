@@ -15,6 +15,7 @@ import com.example.kbok.crawler.kbo.dto.BatterStatBasic2Dto;
 import com.example.kbok.crawler.kbo.dto.BatterStatDto;
 import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
 import com.example.kbok.crawler.kbo.mapper.BatterStatMapper;
+import com.example.kbok.crawler.kbo.util.CollectVerifier;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,9 @@ public class BatterStatService {
     public int syncBatter(String season, String teamCode) throws InterruptedException, IOException{
         List<BatterStatBasic1Dto> basic1List = crawler.crawlBasic1(teamCode, season);
         List<BatterStatBasic2Dto> basic2List = crawler.crawlBasic2(teamCode, season);
+        // 두 페이지 모두 같은 팀 타자 전원이라 인원이 같아야 한다
+        CollectVerifier.verifySame("타자", teamCode, Map.of(
+            "기본기록1", basic1List.size(), "기본기록2", basic2List.size()));
 
         List<BatterStatDto> merged = mergedResult(basic1List, basic2List, Integer.parseInt(season));
 

@@ -18,6 +18,7 @@ import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 
 import com.example.kbok.crawler.kbo.parse.impl.PitcherStatParser;
+import com.example.kbok.crawler.kbo.util.CollectVerifier;
 import com.example.kbok.crawler.kbo.util.KboLinkParser;
 
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,8 @@ public class PitcherStatCrawler {
     // 페이지 버튼이 부분 새로고침(비동기) 대상이 아닌 페이지.
     // 비동기로 요청하면 서버가 조회는 하지만 표 HTML을 응답에 넣지 않아 0건이 된다.
     // 이 페이지들은 일반 폼 전송으로 요청해 페이지 전체를 받는다.
+    /** 기록실 한 페이지에 나오는 인원 */
+    private static final int PAGE_SIZE = 30;
     private static final Set<String> FULL_POSTBACK_PAGES = Set.of("Basic1.aspx", "Basic2.aspx", "Detail1.aspx");
     // 브라우저처럼 "기본기록 페이지에서 넘어왔다"는 정보를 붙이기 위한 값
     private static final String REFERER =
@@ -96,6 +99,8 @@ public class PitcherStatCrawler {
             parseResult.putAll(parse(pageResult.doc, parser));
         }
 
+        // 선수 ID로 담기 때문에 같은 페이지를 두 번 받으면 인원이 늘지 않고 그대로다 → 범위 검증에 걸린다
+        CollectVerifier.verifyPageRange(url.substring(url.lastIndexOf('/') + 1), teamCode, parseResult.size(), maxPage, PAGE_SIZE);
         return parseResult;
     }
 
