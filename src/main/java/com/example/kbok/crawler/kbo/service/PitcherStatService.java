@@ -68,6 +68,7 @@ public class PitcherStatService {
             // 없으면 0으로 채워 투수 기록 자체는 저장한다.
             PitcherStatDetailDto d = detail.get(playerId);
             if (d == null) {
+                log.warn("[PitcherStat] 세부기록 누락 - playerId={}, 선발·세이브 기회·병살을 0으로 저장", playerId);
                 d = PitcherStatDetailDto.builder().gs(0).svo(0).gdp(0).build();
             }
             PitcherStatDto dto = PitcherStatDto.merge(season, basic1.get(playerId), b2, d);  // 리턴값을 바로 받음

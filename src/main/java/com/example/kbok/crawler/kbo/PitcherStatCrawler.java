@@ -101,7 +101,7 @@ public class PitcherStatCrawler {
 
     private PostbackResult crawlInit(String url, Map<String, String> session) throws IOException{
         // 이 요청에 어떤 세션 쿠키를 들고 가는지 확인용
-        log.info("{} 요청 세션 쿠키: {}", url.substring(url.lastIndexOf('/') + 1), session.keySet());
+        log.debug("{} 요청 세션 쿠키: {}", url.substring(url.lastIndexOf('/') + 1), session.keySet());
 
         Connection conn = Jsoup.connect(url)
             .userAgent(UA)
