@@ -33,6 +33,9 @@ public class PitcherStat extends BaseEntity{
     private Integer games;
 
     @Column(nullable = false)
+    private Integer gamesStarted;
+
+    @Column(nullable = false)
     private Integer wins;
 
     @Column(nullable = false)
@@ -46,6 +49,9 @@ public class PitcherStat extends BaseEntity{
 
     @Column(nullable = false)
     private Integer bsv;
+
+    @Column(nullable = false)
+    private Integer svo;
 
     @Column(nullable = false)
     private Integer cg;
@@ -105,25 +111,30 @@ public class PitcherStat extends BaseEntity{
     @Column(nullable = false)
     private Integer balks;
 
+    @Column(nullable = false)
+    private Integer gdp;
+
     @Builder
     public PitcherStat(Player player, Team team, Integer season, Integer games,
-                       Integer wins, Integer losses,
-                       Integer saves, Integer holds, Integer bsv,
+                       Integer gamesStarted, Integer wins, Integer losses,
+                       Integer saves, Integer holds, Integer bsv, Integer svo,
                        Integer cg, Integer sho, Integer qs, String inningsPitched,
                        Integer tbf, Integer hits, Integer homeRuns, Integer doubles,
                        Integer triples, Integer bb, Integer ibb, Integer hbp,
                        Integer so, Integer runs, Integer earnedRuns,
-                       Integer wildPitches, Integer balks,
+                       Integer wildPitches, Integer balks, Integer gdp,
                        BigDecimal era, BigDecimal whip) {
         this.player = player;
         this.team = team;
         this.season = season;
         this.games = games;
+        this.gamesStarted = gamesStarted;
         this.wins = wins;
         this.losses = losses;
         this.saves = saves;
         this.holds = holds;
         this.bsv = bsv;
+        this.svo = svo;
         this.cg = cg;
         this.sho = sho;
         this.qs = qs;
@@ -142,26 +153,29 @@ public class PitcherStat extends BaseEntity{
         this.earnedRuns = earnedRuns;
         this.wildPitches = wildPitches;
         this.balks = balks;
+        this.gdp = gdp;
         this.era = era;
         this.whip = whip;
     }
 
     public void updatePitcherStat(Player player, Integer games,
-                       Integer wins, Integer losses,
-                       Integer saves, Integer holds, Integer bsv,
+                       Integer gamesStarted, Integer wins, Integer losses,
+                       Integer saves, Integer holds, Integer bsv, Integer svo,
                        Integer cg, Integer sho, Integer qs, String inningsPitched,
                        Integer tbf, Integer hits, Integer homeRuns, Integer doubles,
                        Integer triples, Integer bb, Integer ibb, Integer hbp,
                        Integer so, Integer runs, Integer earnedRuns,
-                       Integer wildPitches, Integer balks,
+                       Integer wildPitches, Integer balks, Integer gdp,
                        BigDecimal era, BigDecimal whip) {
         this.player = player;
         this.games = games;
+        this.gamesStarted = gamesStarted;
         this.wins = wins;
         this.losses = losses;
         this.saves = saves;
         this.holds = holds;
         this.bsv = bsv;
+        this.svo = svo;
         this.cg = cg;
         this.sho = sho;
         this.qs = qs;
@@ -180,6 +194,7 @@ public class PitcherStat extends BaseEntity{
         this.earnedRuns = earnedRuns;
         this.wildPitches = wildPitches;
         this.balks = balks;
+        this.gdp = gdp;
         this.era = era;
         this.whip = whip;
     }

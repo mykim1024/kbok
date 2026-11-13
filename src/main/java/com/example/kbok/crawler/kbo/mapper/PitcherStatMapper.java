@@ -32,11 +32,11 @@ public class PitcherStatMapper {
     
         return pitcherStatRepository.findByPlayerKboPlayerIdAndSeason(playerId, dto.getSeason())
             .map(existing -> {
-                existing.updatePitcherStat(player, dto.getGame(), dto.getW(), dto.getL(), dto.getSv(),
-                    dto.getHld(), dto.getBsv(), dto.getCg(), dto.getSho(), dto.getQs(), dto.getIp(),
+                existing.updatePitcherStat(player, dto.getGame(), dto.getGs(), dto.getW(), dto.getL(), dto.getSv(),
+                    dto.getHld(), dto.getBsv(), dto.getSvo(), dto.getCg(), dto.getSho(), dto.getQs(), dto.getIp(),
                     dto.getTbf(), dto.getH(), dto.getHr(), dto.getDoubles(), dto.getTriples(),
                     dto.getBb(), dto.getIbb(), dto.getHbp(), dto.getSo(), dto.getR(), 
-                    dto.getEr(), dto.getWp(), dto.getBk(),
+                    dto.getEr(), dto.getWp(), dto.getBk(), dto.getGdp(),
                     dto.getEra(), dto.getWhip());
                 // 서비스 내부 호출이라 @Transactional이 적용되지 않아 변경 감지가 동작하지 않는다 → 명시적으로 저장
                 return pitcherStatRepository.save(existing);
@@ -47,11 +47,13 @@ public class PitcherStatMapper {
                     .team(team)
                     .season(dto.getSeason())
                     .games(dto.getGame())
+                    .gamesStarted(dto.getGs())
                     .wins(dto.getW())
                     .losses(dto.getL())
                     .saves(dto.getSv())
                     .holds(dto.getHld())
                     .bsv(dto.getBsv())
+                    .svo(dto.getSvo())
                     .cg(dto.getCg())
                     .sho(dto.getSho())
                     .qs(dto.getQs())
@@ -69,6 +71,7 @@ public class PitcherStatMapper {
                     .earnedRuns(dto.getEr())
                     .wildPitches(dto.getWp())
                     .balks(dto.getBk())
+                    .gdp(dto.getGdp())
                     .era(dto.getEra())
                     .whip(dto.getWhip())
                     .build()
