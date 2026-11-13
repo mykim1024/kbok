@@ -6,7 +6,6 @@ import com.example.kbok.crawler.kbo.dto.PitcherStatDto;
 import com.example.kbok.domain.player.entity.PitcherStat;
 import com.example.kbok.domain.player.entity.Player;
 import com.example.kbok.domain.player.repository.PitcherStatRepository;
-import com.example.kbok.domain.player.repository.PlayerRepository;
 import com.example.kbok.domain.team.entity.Team;
 import com.example.kbok.domain.team.repository.TeamRepository;
 
@@ -18,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PitcherStatMapper {
     
-    private final PlayerRepository playerRepository;
+    private final PlayerResolver playerResolver;
     private final TeamRepository teamRepository;
     private final PitcherStatRepository pitcherStatRepository;
 
@@ -27,8 +26,8 @@ public class PitcherStatMapper {
             .orElseThrow(() -> new IllegalStateException("[PitcherStat] 팀 데이터 존재하지 않음."));
         
         String playerId = String.valueOf(dto.getPlayerId());
-        Player player = playerRepository.findByKboPlayerId(playerId)
-            .orElseThrow(() -> new IllegalStateException("[PitcherStat] 선수 데이터 존재하지 않음."));
+        // 명단에 없는 선수(시즌 중 방출·이적 등)도 기록이 버려지지 않게 기록 기준으로 만든다
+        Player player = playerResolver.findOrCreate(dto.getPlayerId(), dto.getName());
     
         return pitcherStatRepository.findByPlayerKboPlayerIdAndSeason(playerId, dto.getSeason())
             .map(existing -> {

@@ -33,7 +33,19 @@ public class BatterStatService {
         List<BatterStatBasic2Dto> basic2List = crawler.crawlBasic2(teamCode, season);
 
         List<BatterStatDto> merged = mergedResult(basic1List, basic2List, Integer.parseInt(season));
-        return saveAll(merged, teamCode);
+
+        // 타석이 0이면 타격 기록이 없는 선수(투수, 대주자 전용 등)라 저장하지 않는다.
+        // 포지션이 아니라 타석으로 거르는 이유: 투수도 타석에 서면 진짜 타격 기록이고,
+        // 야수도 대주자로만 나오면 타격 기록이 없기 때문이다.
+        List<BatterStatDto> batters = merged.stream()
+            .filter(dto -> dto.getPa() != null && dto.getPa() > 0)
+            .collect(Collectors.toList());
+        int excluded = merged.size() - batters.size();
+        if (excluded > 0) {
+            log.info("[BatterStat] {} 타석 없는 선수 {}명 제외 (투수·대주자 전용 등)", teamCode, excluded);
+        }
+
+        return saveAll(batters, teamCode);
     }    
 
     public List<BatterStatDto> mergedResult(List<BatterStatBasic1Dto> basic1List, List<BatterStatBasic2Dto> basic2List, Integer season){
@@ -77,19 +89,22 @@ public class BatterStatService {
         Integer seasonValue = Integer.parseInt(season);
 
         int updated = 0;
+        int noBatting = 0;
         for (RunnerStatDto dto : runners) {
             try {
                 if (mapper.updateRunning(dto, seasonValue)) {
                     updated++;
                 } else {
-                    log.info("[Running] 타자 기록 없음 - name={} (대주자 전용 등)", dto.getName());
+                    // 타석 없는 선수는 타자 기록을 저장하지 않으므로 주루 기록도 반영할 곳이 없다
+                    noBatting++;
+                    log.debug("[Running] 타자 기록 없음 - name={}", dto.getName());
                 }
             } catch (Exception e) {
                 log.warn("[Running] 반영 실패 - name={}, error={}", dto.getName(), e.getMessage());
             }
         }
 
-        log.info("[Running] {} 완료 - {}/{}", teamCode, updated, runners.size());
+        log.info("[Running] {} 완료 - {}/{} (타석 없는 선수 {}명 제외)", teamCode, updated, runners.size(), noBatting);
         return updated;
     }
 }

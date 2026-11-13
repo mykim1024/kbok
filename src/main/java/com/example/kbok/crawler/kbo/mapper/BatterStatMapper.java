@@ -7,7 +7,6 @@ import com.example.kbok.crawler.kbo.dto.RunnerStatDto;
 import com.example.kbok.domain.player.entity.BatterStat;
 import com.example.kbok.domain.player.entity.Player;
 import com.example.kbok.domain.player.repository.BatterStatRepository;
-import com.example.kbok.domain.player.repository.PlayerRepository;
 import com.example.kbok.domain.team.entity.Team;
 import com.example.kbok.domain.team.repository.TeamRepository;
 
@@ -21,17 +20,15 @@ public class BatterStatMapper  {
 
     private final BatterStatRepository batterStatRepository;
     private final TeamRepository teamRepository;
-    private final PlayerRepository playerRepository;
+    private final PlayerResolver playerResolver;
 
     public BatterStat upsert(BatterStatDto dto){
         Team team = teamRepository.findByName(dto.getTeam())
                         .orElseThrow(() -> new IllegalStateException(
                             "Team 없음: " + dto.getTeam() + " (10개 팀 시드 데이터 확인 필요"));
         String playerId = String.valueOf(dto.getPlayerId());
-        Player player = playerRepository.findByKboPlayerId(playerId)
-                            .orElseThrow(() -> new IllegalStateException(
-                                "Player 없음 ID: " + dto.getPlayerId() + " 이름: " + dto.getName() + "(선수 확인 필요)"
-                            ));
+        // 명단에 없는 선수(시즌 중 방출·이적 등)도 기록이 버려지지 않게 기록 기준으로 만든다
+        Player player = playerResolver.findOrCreate(dto.getPlayerId(), dto.getName());
         
 
         return batterStatRepository.findByPlayerKboPlayerIdAndSeason(playerId, dto.getSeason())

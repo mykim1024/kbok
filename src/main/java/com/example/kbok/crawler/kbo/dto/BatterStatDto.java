@@ -67,8 +67,9 @@ public class BatterStatDto {
         dto.slg = basic2.getSlg();
         dto.obp = basic2.getObp();
         dto.ops = basic2.getOps();
-        // 타수가 없어 AVG가 "-"로 나오는 선수는 0으로 저장
-        dto.avg = basic1.getAvg() != null ? basic1.getAvg() : BigDecimal.ZERO;
+        // 타수가 0이면 KBO도 타율을 "-"로 표시한다. 계산할 수 없는 값이라 0이 아니라 null로 둔다.
+        // (0으로 두면 "타율 0"이라는 진짜 기록처럼 보이고, 평균 계산에도 섞여 들어간다)
+        dto.avg = basic1.getAvg();
         return dto;
     }
 }

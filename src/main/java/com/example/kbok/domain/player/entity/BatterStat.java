@@ -80,16 +80,13 @@ public class BatterStat extends BaseEntity{
     @Column(nullable = false)
     private Integer gdp;
 
-    @Column(nullable = false)
+    // 비율 기록은 분모가 0이면 KBO가 "-"로 표시한다 (타수 0, 희생번트만 있는 타석 등). 계산 불가라 null 허용.
     private BigDecimal slg;
 
-    @Column(nullable = false)
     private BigDecimal obp;
 
-    @Column(nullable =  false)
     private BigDecimal ops;
 
-    @Column(nullable = false)
     private BigDecimal avg;     // 타율 (KBO 공식 값)
 
     @Column(nullable = false)
