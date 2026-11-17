@@ -12,9 +12,13 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import com.example.kbok.domain.player.dto.BatterDetailRow;
 import com.example.kbok.domain.player.dto.BatterListItem;
 import com.example.kbok.domain.player.dto.BatterSearchCondition;
 import com.example.kbok.domain.player.dto.BatterSort;
+import com.example.kbok.domain.player.dto.BatterStatValues;
+import com.example.kbok.domain.player.ranking.BattingStandard;
+import com.example.kbok.domain.player.ranking.LeagueBattingTotals;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -74,8 +78,7 @@ public class BatterStatQueryRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    //규정 타석: 144경기 * 3.1 = 446.4
-    private static final int QUALIFIED_PA = 446;
+    //규정 타석: 144경기 * 3.1 = 446.4 s
 
     private BooleanExpression teamEq(String teamName){
         return StringUtils.hasText(teamName) ? team.name.eq(teamName) : null;
@@ -86,7 +89,7 @@ public class BatterStatQueryRepository {
     }
 
     private BooleanExpression qualifiedOnly(Boolean qualified){
-        return Boolean.TRUE.equals(qualified) ? batterStat.pa.goe(QUALIFIED_PA) : null;
+        return Boolean.TRUE.equals(qualified) ? batterStat.pa.goe(BattingStandard.QUALIFIED_PA) : null;
     }
 
     private OrderSpecifier<?> sortOrder(BatterSort sort){
@@ -99,10 +102,52 @@ public class BatterStatQueryRepository {
 
     private OrderSpecifier<Integer> qualifiedFirst(){
         NumberExpression<Integer> rank = new CaseBuilder()
-            .when(batterStat.pa.goe(QUALIFIED_PA)).then(0)
+            .when(batterStat.pa.goe(BattingStandard.QUALIFIED_PA)).then(0)
             .otherwise(1);
 
         return rank.asc();
     }
 
+    public List<BatterStatValues> findQualifiedValues(Integer season){
+        return queryFactory
+            .select(Projections.constructor(BatterStatValues.class,
+                batterStat.avg, batterStat.obp, batterStat.slg,
+                batterStat.ops, batterStat.homeRuns))
+            .from(batterStat)
+            .where(
+                batterStat.season.eq(season),
+                batterStat.pa.goe(BattingStandard.QUALIFIED_PA)
+            )
+            .fetch();
+    }
+
+    public LeagueBattingTotals findLeagueTotals(Integer season){
+        return queryFactory
+            .select(Projections.constructor(LeagueBattingTotals.class, 
+                batterStat.hits.sum().longValue(),
+                batterStat.ab.sum().longValue(),
+                batterStat.bb.sum().longValue(),
+                batterStat.hbp.sum().longValue(),
+                batterStat.sf.sum().longValue(),
+                batterStat.totalBases.sum().longValue()))
+            .from(batterStat)
+            .where(batterStat.season.eq(season))
+            .fetchOne();
+    }
+
+    public BatterDetailRow findDetail(String kboPlayerId, Integer season){
+        return queryFactory
+            .select(Projections.constructor(BatterDetailRow.class,
+                player.kboPlayerId, player.name, team.name, player.position,
+                batterStat.pa, batterStat.avg, batterStat.obp, batterStat.slg,
+                batterStat.ops, batterStat.homeRuns))
+            .from(batterStat)
+            .join(batterStat.player, player)
+            .join(batterStat.team, team)
+            .where(
+                player.kboPlayerId.eq(kboPlayerId),
+                batterStat.season.eq(season)
+            )
+            .fetchOne();
+    }
 }
