@@ -1,5 +1,7 @@
 package com.example.kbok.domain.player.dto;
 
+import org.springframework.util.StringUtils;
+
 public record BatterSearchCondition(
     Integer season,
     String team,
@@ -9,7 +11,7 @@ public record BatterSearchCondition(
 ) {
     public BatterSearchCondition{
         if(qualified == null){
-            qualified = true;
+            qualified = !StringUtils.hasText(name);
         }
 
         if(sort == null){

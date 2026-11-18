@@ -38,6 +38,7 @@ public class BatterStatQueryRepository {
     public Page<BatterListItem> search(BatterSearchCondition cond, Pageable pageable){
         List<BatterListItem> content = queryFactory
             .select(Projections.constructor(BatterListItem.class,
+                player.kboPlayerId,
                 player.name,
                 team.name,
                 batterStat.pa,

@@ -3,6 +3,7 @@ package com.example.kbok.domain.player.dto;
 import java.math.BigDecimal;
 
 public record BatterListItem ( 
+    String kboPlayerId, 
     String name,
     String team,
     Integer pa,
