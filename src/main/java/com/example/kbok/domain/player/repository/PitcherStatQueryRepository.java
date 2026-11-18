@@ -13,10 +13,14 @@ import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+import com.example.kbok.domain.player.dto.PitcherDetailRow;
 import com.example.kbok.domain.player.dto.PitcherListItem;
 import com.example.kbok.domain.player.dto.PitcherRole;
 import com.example.kbok.domain.player.dto.PitcherSearchCondition;
 import com.example.kbok.domain.player.dto.PitcherSort;
+import com.example.kbok.domain.player.dto.PitcherStatValues;
+import com.example.kbok.domain.player.entity.PitcherStat;
+import com.example.kbok.domain.player.ranking.LeaguePitchingTotals;
 import com.example.kbok.domain.player.ranking.PitchingStandard;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
@@ -118,5 +122,44 @@ public class PitcherStatQueryRepository {
             case SAVES -> pitcherStat.saves.desc();
             case HOLDS -> pitcherStat.holds.desc();
         };
+    }
+
+    public LeaguePitchingTotals findLeagueTotals(Integer season){
+        return queryFactory
+            .select(Projections.constructor(LeaguePitchingTotals.class,
+                pitcherStat.earnedRuns.sum().longValue(),
+                pitcherStat.inningsOuts.sum().longValue(),
+                pitcherStat.bb.sum().longValue(),
+                pitcherStat.hits.sum().longValue()))
+            .from(pitcherStat)
+            .where(pitcherStat.season.eq(season))
+            .fetchOne();
+    }
+
+    public List<PitcherStatValues> findStatValues(Integer season){
+        return queryFactory
+            .select(Projections.constructor(PitcherStatValues.class,
+                pitcherStat.inningsOuts, pitcherStat.era, pitcherStat.whip,
+                pitcherStat.wins, pitcherStat.so, pitcherStat.saves, pitcherStat.holds))
+            .from(pitcherStat)
+            .where(pitcherStat.season.eq(season))
+            .fetch();
+    }
+
+    public PitcherDetailRow findDetail(String kboPlayerId, Integer season){
+        return queryFactory
+            .select(Projections.constructor(PitcherDetailRow.class, 
+                player.kboPlayerId, player.name, team.name,
+                pitcherStat.games, pitcherStat.gamesStarted, pitcherStat.inningsPitched,
+                pitcherStat.inningsOuts, pitcherStat.era, pitcherStat.whip,
+                pitcherStat.wins, pitcherStat.so, pitcherStat.saves, pitcherStat.holds))
+            .from(pitcherStat)
+            .join(pitcherStat.player, player)
+            .join(pitcherStat.team, team)
+            .where(
+                player.kboPlayerId.eq(kboPlayerId),
+                pitcherStat.season.eq(season)
+            )
+            .fetchOne();
     }
 }

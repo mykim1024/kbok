@@ -48,6 +48,15 @@ public class RankCalculatorTest {
         assertThat(new Rank(61, 61).topPercent()).isEqualTo(100);
     }
 
+    @Test
+    void 낮을수록_좋은_기록은_낮은_값이_1위() {
+        List<BigDecimal> era = decimals("2.10", "3.00", "3.00", "4.50");
+
+        assertThat(RankCalculator.rankOf(new BigDecimal("2.10"), era, RankDirection.LOWER_IS_BETTER).rank()).isEqualTo(1);
+        assertThat(RankCalculator.rankOf(new BigDecimal("3.00"), era, RankDirection.LOWER_IS_BETTER).rank()).isEqualTo(2);
+        assertThat(RankCalculator.rankOf(new BigDecimal("4.50"), era, RankDirection.LOWER_IS_BETTER).rank()).isEqualTo(4);
+    }
+
     private List<BigDecimal> decimals(String... values) {
         return Arrays.stream(values).map(BigDecimal::new).toList();
     }
