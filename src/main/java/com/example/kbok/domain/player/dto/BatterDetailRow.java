@@ -15,6 +15,6 @@ public record BatterDetailRow(
     Integer homeRuns
 ) {
     public BatterStatValues values() {
-        return new BatterStatValues(avg, obp, slg, ops, homeRuns);
+        return new BatterStatValues(pa, avg, obp, slg, ops, homeRuns);
     }
 }

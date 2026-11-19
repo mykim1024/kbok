@@ -109,17 +109,15 @@ public class BatterStatQueryRepository {
         return rank.asc();
     }
 
-    public List<BatterStatValues> findQualifiedValues(Integer season){
+    public List<BatterStatValues> findSeasonValues(Integer season) {
         return queryFactory
-            .select(Projections.constructor(BatterStatValues.class,
-                batterStat.avg, batterStat.obp, batterStat.slg,
-                batterStat.ops, batterStat.homeRuns))
-            .from(batterStat)
-            .where(
-                batterStat.season.eq(season),
-                batterStat.pa.goe(BattingStandard.QUALIFIED_PA)
-            )
-            .fetch();
+                .select(Projections.constructor(BatterStatValues.class,
+                        batterStat.pa,
+                        batterStat.avg, batterStat.obp, batterStat.slg,
+                        batterStat.ops, batterStat.homeRuns))
+                .from(batterStat)
+                .where(batterStat.season.eq(season))
+                .fetch();
     }
 
     public LeagueBattingTotals findLeagueTotals(Integer season){

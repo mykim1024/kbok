@@ -38,31 +38,36 @@ public class BatterQueryService {
     }
 
     //상세조회
-    public BatterDetailResponse findDetail(String kboPlayerId, Integer season){
-        
+    public BatterDetailResponse findDetail(String kboPlayerId, Integer season) {
         BatterDetailRow row = batterStatQueryRepository.findDetail(kboPlayerId, season);
-        if(row == null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 시즌 기록이 없습니다.");
+        if (row == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 시즌 기록이 없습니다");
         }
 
-        //규정타석
-        boolean qualified = row.pa() != null && row.pa() >= BattingStandard.QUALIFIED_PA;
-
-        List<BatterStatValues> comparisons = qualified? batterStatQueryRepository.findQualifiedValues(season) : List.of();
-        LeagueBattingTotals league = batterStatQueryRepository.findLeagueTotals(season);
-
         BatterStatValues target = row.values();
+        List<BatterStatValues> all = batterStatQueryRepository.findSeasonValues(season);
+        List<BatterStatValues> qualifiedBatters = all.stream()
+                .filter(BatterStatValues::qualified)
+                .toList();
+        LeagueBattingTotals league = batterStatQueryRepository.findLeagueTotals(season);
+        boolean qualified = target.qualified();
+
         List<StatInterpretation> stats = List.of(
-                interpret("타율", target.avg(), valuesOf(comparisons, BatterStatValues::avg), league.avg(), qualified),
-                interpret("출루율", target.obp(), valuesOf(comparisons, BatterStatValues::obp), league.obp(), qualified),
-                interpret("장타율", target.slg(), valuesOf(comparisons, BatterStatValues::slg), league.slg(), qualified),
-                interpret("OPS", target.ops(), valuesOf(comparisons, BatterStatValues::ops), league.ops(), qualified),
-                interpret("홈런", target.homeRuns(), valuesOf(comparisons, BatterStatValues::homeRuns), null, qualified)
+                interpret("타율", target.avg(), valuesOf(qualifiedBatters, BatterStatValues::avg),
+                        qualified, league.avg()),
+                interpret("출루율", target.obp(), valuesOf(qualifiedBatters, BatterStatValues::obp),
+                        qualified, league.obp()),
+                interpret("장타율", target.slg(), valuesOf(qualifiedBatters, BatterStatValues::slg),
+                        qualified, league.slg()),
+                interpret("OPS", target.ops(), valuesOf(qualifiedBatters, BatterStatValues::ops),
+                        qualified, league.ops()),
+                interpret("홈런", target.homeRuns(), valuesOf(all, BatterStatValues::homeRuns),
+                        isPositive(target.homeRuns()), null)
         );
 
         return new BatterDetailResponse(
-            row.kboPlayerId(), row.name(), row.team(), row.position(),
-            season, row.pa(), qualified, BattingStandard.QUALIFIED_PA, stats);
+                row.kboPlayerId(), row.name(), row.team(), row.position(),
+                season, row.pa(), qualified, BattingStandard.QUALIFIED_PA, stats);
     }
 
     private <T extends Number & Comparable<T>> StatInterpretation interpret(
@@ -76,5 +81,18 @@ public class BatterQueryService {
 
     private <T> List<T> valuesOf(List<BatterStatValues> rows, Function<BatterStatValues, T> getter) {
         return rows.stream().map(getter).toList();
+    }
+
+    private <T extends Number & Comparable<T>> StatInterpretation interpret(
+        String label, T value, List<T> comparisons, boolean rankable, BigDecimal leagueAverage) {
+        if (!rankable || value == null) {
+            return new StatInterpretation(label, value, null, null, null, leagueAverage);
+        }
+        Rank rank = RankCalculator.rankOf(value, comparisons);
+        return new StatInterpretation(label, value, rank.rank(), rank.total(), rank.topPercent(), leagueAverage);
+    }
+
+    private boolean isPositive(Integer value) {
+        return value != null && value > 0;
     }
 }
