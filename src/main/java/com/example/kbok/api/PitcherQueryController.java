@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.kbok.domain.player.dto.PitcherDetailResponse;
 import com.example.kbok.domain.player.dto.PitcherListItem;
 import com.example.kbok.domain.player.dto.PitcherSearchCondition;
+import com.example.kbok.domain.player.popular.PlayerType;
+import com.example.kbok.domain.player.popular.PlayerViewCounter;
 import com.example.kbok.domain.player.service.PitcherQueryService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 public class PitcherQueryController {
     
     private final PitcherQueryService pitcherQueryService;
+    private final PlayerViewCounter playerViewCounter;
 
     @GetMapping
     public Page<PitcherListItem> findBySeason(PitcherSearchCondition cond, @PageableDefault(size = 20) Pageable pageable) {
@@ -32,6 +35,9 @@ public class PitcherQueryController {
     public PitcherDetailResponse findDetail(
             @PathVariable String kboPlayerId,
             @RequestParam Integer season) {
-        return pitcherQueryService.findDetail(kboPlayerId, season);
+        
+        PitcherDetailResponse response = pitcherQueryService.findDetail(kboPlayerId, season);
+        playerViewCounter.increase(PlayerType.PITCHER, kboPlayerId);
+        return response;
     }
 }
