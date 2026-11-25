@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Function;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.kbok.config.CacheConfig;
 import com.example.kbok.domain.player.dto.PitcherDetailResponse;
 import com.example.kbok.domain.player.dto.PitcherDetailRow;
 import com.example.kbok.domain.player.dto.PitcherListItem;
@@ -39,6 +41,7 @@ public class PitcherQueryService {
     }
 
     //상세 조회
+    @Cacheable(cacheNames = CacheConfig.PITCHER_DETAIL, key = "#kboPlayerId + ':' + #season")
     public PitcherDetailResponse findDetail(String kboPlayerId, Integer season){
         PitcherDetailRow row = pitcherStatQueryRepository.findDetail(kboPlayerId, season);
         if(row == null){
