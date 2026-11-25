@@ -8,8 +8,10 @@ import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.cache.interceptor.LoggingCacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.BatchStrategies;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.cache.RedisCacheWriter;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext.SerializationPair;
@@ -33,7 +35,7 @@ public class CacheConfig implements CachingConfigurer{
         ObjectMapper cacheMaper = objectMapper.copy()
             .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true);
         
-        return RedisCacheManager.builder(connectionFactory)
+        return RedisCacheManager.builder(RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory, BatchStrategies.scan(100)))
             .withCacheConfiguration(BATTER_DETAIL, detailConfig(cacheMaper, BatterDetailResponse.class))
             .withCacheConfiguration(PITCHER_DETAIL, detailConfig(cacheMaper, PitcherDetailResponse.class))
             .build();

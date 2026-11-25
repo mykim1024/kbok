@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.example.kbok.domain.player.cache.PlayerDetailCacheEvictor;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,6 +30,7 @@ public class KboFullSyncService {
     private final BatterStatService batterStatService;
     private final PitcherStatService pitcherStatService;
     private final FieldingStatService fieldingStatService;
+    private final PlayerDetailCacheEvictor playerDetailCacheEvictor;
 
     public Map<String, String> syncAllTeams(String season) {
         Map<String, String> result = new LinkedHashMap<>();
@@ -55,6 +58,7 @@ public class KboFullSyncService {
                 result.put(teamCode, "실패: " + e.getMessage());
             }
         }
+        playerDetailCacheEvictor.evictAll();
         return result;
     }
 }

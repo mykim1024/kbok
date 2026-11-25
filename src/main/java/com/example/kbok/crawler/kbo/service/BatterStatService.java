@@ -48,7 +48,7 @@ public class BatterStatService {
         if (excluded > 0) {
             log.info("[BatterStat] {} 타석 없는 선수 {}명 제외 (투수·대주자 전용 등)", teamCode, excluded);
         }
-
+        
         return saveAll(batters, teamCode);
     }    
 
@@ -81,7 +81,6 @@ public class BatterStatService {
                 log.warn("[BatterStat] 저장 실패 - name={}, error={}", dto.getName(), e.getMessage());
              }
         }
-        
         
         log.info("[BatterStat] {} 완료 - {}/{}", teamCode, successCount, list.size());
         return successCount;
