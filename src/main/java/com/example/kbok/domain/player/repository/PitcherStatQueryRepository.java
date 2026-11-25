@@ -19,7 +19,6 @@ import com.example.kbok.domain.player.dto.PitcherRole;
 import com.example.kbok.domain.player.dto.PitcherSearchCondition;
 import com.example.kbok.domain.player.dto.PitcherSort;
 import com.example.kbok.domain.player.dto.PitcherStatValues;
-import com.example.kbok.domain.player.entity.PitcherStat;
 import com.example.kbok.domain.player.ranking.LeaguePitchingTotals;
 import com.example.kbok.domain.player.ranking.PitchingStandard;
 import com.querydsl.core.types.OrderSpecifier;

@@ -12,8 +12,6 @@ import com.example.kbok.domain.player.service.BatterQueryService;
 
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Function;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.kbok.config.CacheConfig;
 import com.example.kbok.domain.player.dto.BatterDetailResponse;
 import com.example.kbok.domain.player.dto.BatterDetailRow;
 import com.example.kbok.domain.player.dto.BatterListItem;
@@ -38,6 +40,7 @@ public class BatterQueryService {
     }
 
     //상세조회
+    @Cacheable(cacheNames = CacheConfig.BATTER_DETAIL, key = "#kboPlayerId + ':' + #season")
     public BatterDetailResponse findDetail(String kboPlayerId, Integer season) {
         BatterDetailRow row = batterStatQueryRepository.findDetail(kboPlayerId, season);
         if (row == null) {
@@ -68,15 +71,6 @@ public class BatterQueryService {
         return new BatterDetailResponse(
                 row.kboPlayerId(), row.name(), row.team(), row.position(),
                 season, row.pa(), qualified, BattingStandard.QUALIFIED_PA, stats);
-    }
-
-    private <T extends Number & Comparable<T>> StatInterpretation interpret(
-        String label, T value, List<T> comparisons, BigDecimal leagueAverage, boolean qualified) {
-        if (!qualified || value == null) {
-            return new StatInterpretation(label, value, null, null, null, leagueAverage);
-        }
-        Rank rank = RankCalculator.rankOf(value, comparisons);
-        return new StatInterpretation(label, value, rank.rank(), rank.total(), rank.topPercent(), leagueAverage);
     }
 
     private <T> List<T> valuesOf(List<BatterStatValues> rows, Function<BatterStatValues, T> getter) {
